@@ -41,7 +41,7 @@ class Venue(db.Model):
     address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
     genres = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+    facebook_link = db.Column(db.String(500))
     image_link = db.Column(db.String(500))
     website_link = db.Column(db.String(500))
     talent_box = db.Column(db.Boolean, default=False)
@@ -57,14 +57,14 @@ class Artist(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
-    city = db.Column(db.String(120), nullable=False)
-    state = db.Column(db.String(120), nullable=False)
-    phone = db.Column(db.String(120), nullable=False)
-    genres = db.Column(db.String(120), nullable=False)
-    facebook_link = db.Column(db.String(500), nullable=False)
-    image_link = db.Column(db.String(500), nullable=False)
-    website_link = db.Column(db.String(500), nullable=False)
-    venue_box = db.Column(db.Boolean, default=False, nullable=True)
+    city = db.Column(db.String, nullable=False)
+    state = db.Column(db.String, nullable=False)
+    phone = db.Column(db.String, nullable=False)
+    genres = db.Column(db.String, nullable=False)
+    facebook_link = db.Column(db.String, nullable=True)
+    image_link = db.Column(db.String, nullable=True)
+    website_link = db.Column(db.String, nullable=True)
+    venue_box = db.Column(db.Boolean, default=False)
     seeking_desc = db.Column(db.String, nullable=False)
 
     def __repr__(self):
@@ -72,12 +72,15 @@ class Artist(db.Model):
 
 class Show(db.Model):
     __tablename__ = 'shows'
-    artist_id = db.Column(db.Integer, primary_key=True)
     venue_id = db.Column(db.Integer, nullable=False)
-    date_time = db.Column(db.DateTime, nullable=False)
+    venue_name = db.Column(db.String)
+    artist_id = db.Column(db.Integer, primary_key=True)
+    artist_name = db.Column(db.String)
+    artist_image_link = db.Column(db.String(500))
+    start_time = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
-      return f'<shows {self.artist_id} {self.venue_id}>'
+      return f'<shows {self.artist_name} {self.venue_name}>'
 
 # DONE TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -114,28 +117,16 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  # data=[{
-  #   "city": "San Francisco",
-  #   "state": "CA",
-  #   "venues": [{
-  #     "id": 1,
-  #     "name": "The Musical Hop",
-  #     "num_upcoming_shows": 0,
-  #   }, {
-  #     "id": 3,
-  #     "name": "Park Square Live Music & Coffee",
-  #     "num_upcoming_shows": 1,
-  #   }]
-  # }, {
-  #   "city": "New York",
-  #   "state": "NY",
-  #   "venues": [{
-  #     "id": 2,
-  #     "name": "The Dueling Pianos Bar",
-  #     "num_upcoming_shows": 0,
-  #   }]
-  # }]
-  return render_template('pages/venues.html', data=Venue.query.all())
+  venues = Venue.query.all()
+  venue_data = []
+  for venue in venues:
+    venue_data.append({
+        "venue_name": venue.name, 
+        "venue_city": venue.city, 
+        "venue_state": venue.state
+    })
+    print(venue_data)
+    return render_template('pages/venues.html', areas=venues)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -176,7 +167,7 @@ def show_venue(venue_id):
       "artist_id": 4,
       "artist_name": "Guns N Petals",
       "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-      "start_time": "2019-05-21T21:30:00.000Z"
+      "date_time": "2019-05-21T21:30:00.000Z"
     }],
     "upcoming_shows": [],
     "past_shows_count": 1,
@@ -215,23 +206,23 @@ def show_venue(venue_id):
       "artist_id": 5,
       "artist_name": "Matt Quevedo",
       "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-      "start_time": "2019-06-15T23:00:00.000Z"
+      "date_time": "2019-06-15T23:00:00.000Z"
     }],
     "upcoming_shows": [{
       "artist_id": 6,
       "artist_name": "The Wild Sax Band",
       "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-      "start_time": "2035-04-01T20:00:00.000Z"
+      "date_time": "2035-04-01T20:00:00.000Z"
     }, {
       "artist_id": 6,
       "artist_name": "The Wild Sax Band",
       "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-      "start_time": "2035-04-08T20:00:00.000Z"
+      "date_time": "2035-04-08T20:00:00.000Z"
     }, {
       "artist_id": 6,
       "artist_name": "The Wild Sax Band",
       "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-      "start_time": "2035-04-15T20:00:00.000Z"
+      "date_time": "2035-04-15T20:00:00.000Z"
     }],
     "past_shows_count": 1,
     "upcoming_shows_count": 1,
@@ -273,7 +264,8 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # DONE TODO: replace with real data returned from querying the database
-   return render_template('pages/artists.html', data=Artist.query.all())
+  artists = Artist.query.all()
+  return render_template('pages/artists.html', artists=artists)
     
 
 @app.route('/artists/search', methods=['POST'])
@@ -311,7 +303,7 @@ def show_artist(artist_id):
       "venue_id": 1,
       "venue_name": "The Musical Hop",
       "venue_image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-      "start_time": "2019-05-21T21:30:00.000Z"
+      "date_time": "2019-05-21T21:30:00.000Z"
     }],
     "upcoming_shows": [],
     "past_shows_count": 1,
@@ -331,7 +323,7 @@ def show_artist(artist_id):
       "venue_id": 3,
       "venue_name": "Park Square Live Music & Coffee",
       "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2019-06-15T23:00:00.000Z"
+      "date_time": "2019-06-15T23:00:00.000Z"
     }],
     "upcoming_shows": [],
     "past_shows_count": 1,
@@ -351,17 +343,17 @@ def show_artist(artist_id):
       "venue_id": 3,
       "venue_name": "Park Square Live Music & Coffee",
       "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2035-04-01T20:00:00.000Z"
+      "date_time": "2035-04-01T20:00:00.000Z"
     }, {
       "venue_id": 3,
       "venue_name": "Park Square Live Music & Coffee",
       "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2035-04-08T20:00:00.000Z"
+      "date_time": "2035-04-08T20:00:00.000Z"
     }, {
       "venue_id": 3,
       "venue_name": "Park Square Live Music & Coffee",
       "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2035-04-15T20:00:00.000Z"
+      "date_time": "2035-04-15T20:00:00.000Z"
     }],
     "past_shows_count": 0,
     "upcoming_shows_count": 3,
@@ -429,7 +421,7 @@ def edit_venue_submission(venue_id):
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
   form = ArtistForm()
-  return render_template('forms/new_artist.html', form=form)
+  return render_template('forms/new_artist.html', form = form)
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
@@ -440,9 +432,9 @@ def create_artist_submission():
   if request.method == 'POST':
      if form.validate() == False:
         flash('An error occured. Artist could not be added.')
-        return render_template('pages/home.html')
+        return render_template('pages/home.html', form = form)
      else:
-        insert = ArtistForm.insert().values(
+        artist = ArtistForm.insert().values(
            name = request.form['name'],
            city = request.form['city'],
            state = request.form['state'],
@@ -453,7 +445,6 @@ def create_artist_submission():
            website_link = request.form['website_link'],
            seeking_venue = request.form['seeking_venue'],
            seeking_description = request.form['seeking_description'])
-        artist = insert
         db.session.add(artist)
         db.session.commit()
 
@@ -497,43 +488,57 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
+  show_data = []
+  shows = Show.query.all()
+  for show in shows:
+    show_data.append({
+       "venue_id" : show.venue_id, 
+       "venue_name" : '', 
+       "artist_id" : show.artist_id, 
+       "artist_name" : '', 
+       "artist_image_link" : '', 
+       "start_time" : show.start_time
+    })
+
+
   # data=[{
   #   "venue_id": 1,
   #   "venue_name": "The Musical Hop",
   #   "artist_id": 4,
   #   "artist_name": "Guns N Petals",
   #   "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-  #   "start_time": "2019-05-21T21:30:00.000Z"
+  #   "date_time": "2019-05-21T21:30:00.000Z"
   # }, {
   #   "venue_id": 3,
   #   "venue_name": "Park Square Live Music & Coffee",
   #   "artist_id": 5,
   #   "artist_name": "Matt Quevedo",
   #   "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-  #   "start_time": "2019-06-15T23:00:00.000Z"
+  #   "date_time": "2019-06-15T23:00:00.000Z"
   # }, {
   #   "venue_id": 3,
   #   "venue_name": "Park Square Live Music & Coffee",
   #   "artist_id": 6,
   #   "artist_name": "The Wild Sax Band",
   #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "start_time": "2035-04-01T20:00:00.000Z"
+  #   "date_time": "2035-04-01T20:00:00.000Z"
   # }, {
   #   "venue_id": 3,
   #   "venue_name": "Park Square Live Music & Coffee",
   #   "artist_id": 6,
   #   "artist_name": "The Wild Sax Band",
   #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "start_time": "2035-04-08T20:00:00.000Z"
+  #   "date_time": "2035-04-08T20:00:00.000Z"
   # }, {
   #   "venue_id": 3,
   #   "venue_name": "Park Square Live Music & Coffee",
   #   "artist_id": 6,
   #   "artist_name": "The Wild Sax Band",
   #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "start_time": "2035-04-15T20:00:00.000Z"
+  #   "date_time": "2035-04-15T20:00:00.000Z"
   # }]
-  return render_template('pages/shows.html', data=Show.query.all())
+  
+  return render_template('pages/shows.html', show=show)
 
 @app.route('/shows/create')
 def create_shows():
