@@ -46,7 +46,7 @@ class Venue(db.Model):
     website_link = db.Column(db.String(500))
     talent_box = db.Column(db.Boolean, default=False)
     seeking_desc = db.Column(db.String(1000))
-    shows = db.Column(db.String)
+    # shows = db.relationship('Show', backref='venue',lazy=True)
 
     # DONE TODO: implement any missing fields, as a database migration using Flask-Migrate
     def __repr__(self):
@@ -62,26 +62,28 @@ class Artist(db.Model):
     state = db.Column(db.String, nullable=False)
     phone = db.Column(db.String, nullable=False)
     genres = db.Column(db.String, nullable=False)
-    facebook_link = db.Column(db.String, nullable=True)
-    image_link = db.Column(db.String, nullable=True)
-    website_link = db.Column(db.String, nullable=True)
-    venue_box = db.Column(db.Boolean, default=False)
-    seeking_desc = db.Column(db.String, nullable=False)
+    facebook_link = db.Column(db.String)
+    image_link = db.Column(db.String)
+    website_link = db.Column(db.String(200))
+    venue_box = db.Column(db.Boolean)
+    seeking_desc = db.Column(db.String(200))
+    # shows = db.relationship('Show', backref='artist', lazy=True)
 
     def __repr__(self):
       return f'<artists {self.id} {self.name}>'
 
 class Show(db.Model):
     __tablename__ = 'shows'
-    venue_id = db.Column(db.Integer, nullable=False)
-    venue_name = db.Column(db.String)
-    artist_id = db.Column(db.Integer, primary_key=True)
-    artist_name = db.Column(db.String)
+    id = db.Column(db.Integer, primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'), nullable=False)
+    venue_name = db.Column(db.String, nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
+    artist_name = db.Column(db.String, nullable=False)
     artist_image_link = db.Column(db.String(500))
     start_time = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
-      return f'<shows {self.artist_name} {self.venue_name}>'
+      return f'<shows {self.artist_id} {self.venue_id}>'
 
 # DONE TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -91,12 +93,17 @@ class Show(db.Model):
 # Filters.
 #----------------------------------------------------------------------------#
 
+# Used 'https://stackoverflow.com/questions/63269150/typeerror-parser-must-be-a-string-or-character-stream-not-datetime'
+#  as a source to fix datetime TypeError. 
 def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
-  if format == 'full':
-      format="EEEE MMMM, d, y 'at' h:mma"
-  elif format == 'medium':
-      format="EE MM, dd, y h:mma"
+  if isinstance(value, str):
+     date = dateutil.parser.parse(value)
+  else: date = value
+  # date = dateutil.parser.parse(value)
+  # if format == 'full':
+  #     format="EEEE MMMM, d, y 'at' h:mma"
+  # elif format == 'medium':
+  #     format="EE MM, dd, y h:mma"
   return babel.dates.format_datetime(date, format, locale='en')
 
 app.jinja_env.filters['datetime'] = format_datetime
@@ -280,7 +287,7 @@ def create_venue_submission():
         website="",
         image_link=img
      ))
-  except expression:
+  except:
      error = True
   finally:
      if not error:
@@ -288,6 +295,8 @@ def create_venue_submission():
         flash('Venue ' + request.form['name'] + ' was successfully listed!')
      else:
         flash('An error occurred. Venue ' + name + ' could not be listed.')
+        db.session.rollback()
+
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
@@ -528,12 +537,16 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
+  data=[{
+    "venue_id": 1,
+    "venue_name": "The Musical Hop",
+    "artist_id": 4,
+    "artist_name": "Guns N Petals",
+    "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+    "start_time": "2019-05-21T21:30:00.000Z"
+  }]
   # show_data = []
-  shows = Show.query.all()
-  for show in shows:
-     artist = show.artist_name 
-     venue = show.venue_name
-     start_time = show.start_time
+  # shows = Show.query.all()
   # for show in shows:
   #   show_data.append({
   #      "venue_id" : show.venue_id, 
@@ -543,46 +556,7 @@ def shows():
   #      "artist_image_link" : '', 
   #      "start_time" : show.start_time
   #   })
-
-
-  # data=[{
-  #   "venue_id": 1,
-  #   "venue_name": "The Musical Hop",
-  #   "artist_id": 4,
-  #   "artist_name": "Guns N Petals",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-  #   "date_time": "2019-05-21T21:30:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 5,
-  #   "artist_name": "Matt Quevedo",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-  #   "date_time": "2019-06-15T23:00:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 6,
-  #   "artist_name": "The Wild Sax Band",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "date_time": "2035-04-01T20:00:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 6,
-  #   "artist_name": "The Wild Sax Band",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "date_time": "2035-04-08T20:00:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 6,
-  #   "artist_name": "The Wild Sax Band",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "date_time": "2035-04-15T20:00:00.000Z"
-  # }]
-  
-  return render_template('pages/shows.html', shows=shows)
+  return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create')
 def create_shows():
