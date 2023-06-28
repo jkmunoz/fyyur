@@ -46,6 +46,7 @@ class Venue(db.Model):
     website_link = db.Column(db.String(500))
     talent_box = db.Column(db.Boolean, default=False)
     seeking_desc = db.Column(db.String(1000))
+    shows = db.Column(db.String)
 
     # DONE TODO: implement any missing fields, as a database migration using Flask-Migrate
     def __repr__(self):
@@ -117,16 +118,30 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
+  places = Venue.query.distinct(Venue.city, Venue.state).all()
   venues = Venue.query.all()
-  venue_data = []
-  for venue in venues:
-    venue_data.append({
-        "venue_name": venue.name, 
-        "venue_city": venue.city, 
-        "venue_state": venue.state
-    })
-    print(venue_data)
-    return render_template('pages/venues.html', areas=venues)
+  areas = []
+
+  for place in places:
+     new_venues = []
+     for venue in venues:
+        if venue.city == place.city and venue.state == place.state:
+           num_upcoming_shows = 0
+           for show in venue.shows:
+              if show.start_time > datetime.now():
+                 num_upcoming_shows += 1
+                 new_venues.append({
+                    'id': venue.id,
+                    'name': venue.name, 
+                    'shows': venue.shows
+                 })
+                 areas.append({
+                    'city': venue.city, 
+                    'state': venue.state, 
+                    'venues': new_venues
+                 })
+              
+  return render_template('pages/venues.html', areas=venues)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -242,12 +257,37 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  error = False
+  name = request.form['name']
+  city = request.form['city']
+  state = request.form['city']
+  address = request.form['city']
+  phone = request.form['phone']
+  genres = request.form['genres']
+  fb = request.form['facebook_link']
+  img = request.form['image_link']
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  try:
+     db.session.add(Venue(
+        city=city,
+        state=state,
+        name=name,
+        address=address,
+        phone=phone, 
+        facebook_link=fb,
+        genres=genres,
+        seeking_talent=False,
+        website="",
+        image_link=img
+     ))
+  except expression:
+     error = True
+  finally:
+     if not error:
+        db.session.commit()
+        flash('Venue ' + request.form['name'] + ' was successfully listed!')
+     else:
+        flash('An error occurred. Venue ' + name + ' could not be listed.')
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
@@ -488,17 +528,21 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  show_data = []
+  # show_data = []
   shows = Show.query.all()
   for show in shows:
-    show_data.append({
-       "venue_id" : show.venue_id, 
-       "venue_name" : '', 
-       "artist_id" : show.artist_id, 
-       "artist_name" : '', 
-       "artist_image_link" : '', 
-       "start_time" : show.start_time
-    })
+     artist = show.artist_name 
+     venue = show.venue_name
+     start_time = show.start_time
+  # for show in shows:
+  #   show_data.append({
+  #      "venue_id" : show.venue_id, 
+  #      "venue_name" : '', 
+  #      "artist_id" : show.artist_id, 
+  #      "artist_name" : '', 
+  #      "artist_image_link" : '', 
+  #      "start_time" : show.start_time
+  #   })
 
 
   # data=[{
@@ -538,7 +582,7 @@ def shows():
   #   "date_time": "2035-04-15T20:00:00.000Z"
   # }]
   
-  return render_template('pages/shows.html', show=show)
+  return render_template('pages/shows.html', shows=shows)
 
 @app.route('/shows/create')
 def create_shows():
