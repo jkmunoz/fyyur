@@ -269,21 +269,25 @@ def create_venue_submission():
   address = request.form['city']
   phone = request.form['phone']
   genres = request.form['genres']
-  fb = request.form['facebook_link']
-  img = request.form['image_link']
+  facebook_link = request.form['facebook_link']
+  image_link = request.form['image_link']
+  website_link = request.form['website_link']
+  #seeking_desc = request.form['seeking_desc']
 
   try:
      db.session.add(Venue(
+        name=name,
         city=city,
         state=state,
-        name=name,
         address=address,
         phone=phone, 
-        facebook_link=fb,
         genres=genres,
-        seeking_talent=False,
-        website="",
-        image_link=img
+        facebook_link=facebook_link,
+        image_link=image_link, 
+        website_link=website_link,  
+        #seeking_desc=seeking_desc
+        
+        
      ))
   except:
      error = True
@@ -485,8 +489,8 @@ def create_artist_submission():
   genres = request.form['genres'],
   facebook_link = request.form['facebook_link'],
   website_link = request.form['website_link'],
-  seeking_venue = request.form['seeking_venue'],
-  seeking_description = request.form['seeking_description']
+  # venue_box = request.form['seeking_venue'],
+  seeking_desc = request.form['seeking_description']
   try:
      db.session.add(Artist(
         name=name, 
@@ -497,8 +501,8 @@ def create_artist_submission():
         genres=genres, 
         facebook_link=facebook_link, 
         website_link=website_link, 
-        seeking_venue=seeking_venue, 
-        seeking_description=seeking_description
+        # venue_box=venue_box, 
+        seeking_desc=seeking_desc
      ))
   except:
      error = True
@@ -532,23 +536,26 @@ def create_show_submission():
   error = False
   artist_id = request.form['artist_id']
   venue_id = request.form['venue_id']
-  start_time = request.form['start_time']
-  try:
-     db.session.add(Show(
-        artist_id=artist_id, 
-        venue_id=venue_id, 
-        start_time=start_time
-     ))
-  except:
-     error = True
-  finally:
-     if not error:
-        db.session.commit()
-        flash('Show was successfully listed!')
-     if error:
+  start_time = request.form['start_time']  
+
+  if request.method == 'POST':
+    #  if not request.form['artist_id'] or not request.form['venue_id'] or not request.form['start_time']:
+    #     flash('All fields are required!', 'error')
+    #  else:
+    try:
+      db.session.add(Show(
+      artist_id=artist_id, 
+      venue_id=venue_id, 
+      start_time=start_time
+      ))
+      db.session.commit()
+      flash('Your show has been listed!')
+    except:
+      error = True
+    finally:
+      if error:
         flash('An error occurred. Show could not be listed.')
         db.session.rollback()
-
   return render_template('pages/home.html')
 
 @app.errorhandler(404)
