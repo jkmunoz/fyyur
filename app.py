@@ -145,7 +145,7 @@ def venues():
                     'venues': new_venues
                  })
               
-  return render_template('pages/venues.html', areas=venues)
+  return render_template('pages/venues.html', venues=places)
 
 
 @app.route('/venues/search', methods=['POST'])
