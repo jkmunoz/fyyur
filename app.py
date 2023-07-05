@@ -158,8 +158,6 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
 
-  # data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
-
   return render_template('pages/show_venue.html', venues = Venue.query.all(), 
                          places = Venue.query.get(venue_id), 
                          venue = Show.query.filter_by(venue_id=venue_id).order_by('id').all())
