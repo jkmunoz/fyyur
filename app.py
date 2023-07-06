@@ -26,7 +26,6 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
@@ -142,11 +141,11 @@ def venues():
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  search_term = 'keyword'
+  # search_term = 'keyword'
   #   response = request.query(Venue).filter(Venue.name.like(f'%{search_term}')).all()
-  # v_query = request.args.get('query')
+  v_search = request.form.get('search_term', '')
   # response = Venue.query.filter(Venue.name.like(f'%{search_term}')).all()
-  response = db.session.query(Venue).filter(Venue.name.like(f'%{search_term}')).all()
+  response = db.session.query(Venue).filter(Venue.name.ilike(f'%{v_search}%')).all()
 
   for venue in response:
     print(venue.name)
@@ -231,17 +230,17 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
-  }
+  query = request.form.get('search_term', '')
+  data = Artist.query.filter(Artist.name.ilike(f'%{query}%')).all()
+  searched_artists = []
+  current_time = datetime.now()
+  for artist in data:
+    count = Show.query.filter_by(artist_id = artist.id).filter(Show.start_time > current_time).count()
+    searched_artists.append({"id":artist.id,"name":artist.name,"num_upcoming_shows":count})
+    response={
+      "count": len(data),
+      "data": searched_artists
+    }
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
@@ -468,6 +467,21 @@ def create_show_submission():
      flash('Your show has been listed!')
        
   return render_template('pages/home.html')
+
+@app.route('/shows/search', methods=['POST'])
+def search_shows():
+   query = request.form.get('search_term', '')
+   searched_shows = db.session.query(Venue.id.label('venue_id'),Venue.name.label('venue_name'),
+                                     Artist.id.label('artist_id'),Artist.name.label('artist_name'),
+                                     Artist.image_link.label('artist_image_link'),
+                                     Show.show_time.label('start_time')).outerjoin(Venue).outerjoin(Artist).filter(or_(Artist.name.ilike(f'%{query}%'),
+                                                                                                                       Venue.name.ilike(f'%{query}%'))).all()
+   response={
+      "count": len(searched_shows), 
+      "data": searched_shows
+   }
+   return render_template('pages/search_shows.html', results=response, search_term=request.form.get('search_term', ''))
+
 
 @app.errorhandler(404)
 def not_found_error(error):
