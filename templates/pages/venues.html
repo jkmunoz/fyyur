@@ -12,8 +12,45 @@
 					<h5>{{ venue.name }}</h5>
 				</div>
 			</a>
+			<button class="delete-button" data-id="{{ venue.id }}">&cross;</button>
 		</li>
 		{% endfor %}
 	</ul>
+	<style>
+		li button {
+        -webkit-appearance: none;
+        border: none;
+        outline: none;
+        color: red;
+        float: right;
+        cursor: pointer;
+        font-size: 20px;
+      }
+	</style>	
+	<script>
+		const deleteBtns = document.querySelectorAll('.delete-button');
+		for (let i = 0; i < deleteBtns.length; i++) {
+			const btn = deleteBtns[i];
+			btn.onclick = function(e) {
+				const venueId = e.target.dataset['id'];
+				fetch('/venues/' + venueId, {
+					method: 'DELETE'
+				})
+				.then(function() {
+					const venue = e.target.parentElement;
+					item.remove();
+				})
+			}
+		}
+
+		const deleteBtn = document.createElement('button');
+		deleteBtn.className = 'delete-button';
+		deleteBtn.setAttribute('data-id', jsonResponse.id);
+		deleteBtn.innerHTML = '&cross;';
+		li.appendChild(deleteBtn);
+
+		document.getElementById('venues').appendChild(li);
+		document.getElementById('error').className = 'hidden';
+	</script>
 {% endfor %}
 {% endblock %}
